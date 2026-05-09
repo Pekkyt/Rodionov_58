@@ -12,6 +12,11 @@ vector<Token> toPostfix(const vector<Token>& tokens, vector<Error>& errors)
     return {};
 }
 
+ExprNode* buildTree(const vector<Token>& postfix, vector<Error>& errors)
+{
+    return nullptr;
+}
+
 int main(int argc, char* argv[])
 {
     return 0;
