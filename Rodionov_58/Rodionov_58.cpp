@@ -36,10 +36,40 @@ ExprNode* parseExpression(const string& expression, vector<Error>& errors)
     return nullptr;
 }
 
+ExprNode::ExprNode(double val)
+{
+    value = val;
+    type = ExprNodeType::NUMBER;
+    left = nullptr;
+    right = nullptr;
+    nodeId = 0;
+    token = "";
+}
+
+ExprNode::ExprNode(ExprNodeType type, ExprNode* left, ExprNode* right)
+{
+    value = 0;
+    this->type = type;
+    this->left = left;
+    this->right = right;
+    nodeId = 0;
+    token = "";
+}
+
 ExprNode::~ExprNode()
 {
     delete left;
     delete right;
+}
+
+double calculate(ExprNode* node, const map<string, double>& variables, vector<Error>& errors)
+{
+    if (node == nullptr)
+    {
+        return 0;
+    }
+
+    return 0;
 }
 
 int main(int argc, char* argv[])
