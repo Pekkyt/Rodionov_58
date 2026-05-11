@@ -9,6 +9,55 @@ namespace tests_parseExpression
     TEST_CLASS(tests_parseExpression)
     {
     private:
+        ExprNode* CreateNumber(double value, const string& token)
+        {
+            ExprNode* node = new ExprNode(value);
+            node->value = value;
+            node->type = ExprNodeType::NUMBER;
+            node->left = nullptr;
+            node->right = nullptr;
+            node->token = token;
+            return node;
+        }
+
+        ExprNode* CreateVariable(const string& token)
+        {
+            ExprNode* node = new ExprNode(0.0);
+            node->value = 0;
+            node->type = ExprNodeType::VARIABLE;
+            node->left = nullptr;
+            node->right = nullptr;
+            node->token = token;
+            return node;
+        }
+
+        ExprNode* CreateUnary(ExprNode* child)
+        {
+            ExprNode* node = new ExprNode(0.0);
+            node->value = 0;
+            node->type = ExprNodeType::UNARY_MINUS;
+            node->left = child;
+            node->right = nullptr;
+            node->token = "~";
+            return node;
+        }
+
+        ExprNode* CreateBinary(ExprNodeType type, const string& token, ExprNode* left, ExprNode* right)
+        {
+            ExprNode* node = new ExprNode(0.0);
+            node->value = 0;
+            node->type = type;
+            node->left = left;
+            node->right = right;
+            node->token = token;
+            return node;
+        }
+
+        void AssertDouble(double expected, double actual)
+        {
+            Assert::AreEqual(expected, actual, 0.000001);
+        }
+
         void AssertError(const Error& error,
             ErrorType expectedType,
             int expectedPosition,
@@ -19,73 +68,25 @@ namespace tests_parseExpression
             Assert::AreEqual(expectedToken.c_str(), error.token.c_str());
         }
 
-        void AssertNumber(ExprNode* node,
-            double expectedValue,
-            const string& expectedToken)
+        void AssertTreeEqual(ExprNode* actual, ExprNode* expected)
         {
-            Assert::IsNotNull(node);
-            Assert::IsTrue(ExprNodeType::NUMBER == node->type);
-            Assert::AreEqual(expectedValue, node->value, 0.000001);
-            Assert::AreEqual(expectedToken.c_str(), node->token.c_str());
-            Assert::IsNull(node->left);
-            Assert::IsNull(node->right);
-        }
-
-        void AssertVariable(ExprNode* node,
-            const string& expectedToken)
-        {
-            Assert::IsNotNull(node);
-            Assert::IsTrue(ExprNodeType::VARIABLE == node->type);
-            Assert::AreEqual(expectedToken.c_str(), node->token.c_str());
-            Assert::IsNull(node->left);
-            Assert::IsNull(node->right);
-        }
-
-        void AssertUnary(ExprNode* node,
-            const string& expectedToken)
-        {
-            Assert::IsNotNull(node);
-            Assert::IsTrue(ExprNodeType::UNARY_MINUS == node->type);
-            Assert::AreEqual(expectedToken.c_str(), node->token.c_str());
-            Assert::IsNotNull(node->left);
-            Assert::IsNull(node->right);
-        }
-
-        void AssertBinary(ExprNode* node,
-            ExprNodeType expectedType,
-            const string& expectedToken)
-        {
-            Assert::IsNotNull(node);
-            Assert::IsTrue(expectedType == node->type);
-            Assert::AreEqual(expectedToken.c_str(), node->token.c_str());
-            Assert::IsNotNull(node->left);
-            Assert::IsNotNull(node->right);
-        }
-
-        int CountNodes(ExprNode* node)
-        {
-            if (node == nullptr)
+            if (expected == nullptr)
             {
-                return 0;
+                Assert::IsNull(actual);
+                return;
             }
 
-            return 1 + CountNodes(node->left) + CountNodes(node->right);
-        }
+            Assert::IsNotNull(actual);
+            Assert::IsTrue(expected->type == actual->type);
+            Assert::AreEqual(expected->token.c_str(), actual->token.c_str());
 
-        int CountOperationNodes(ExprNode* node)
-        {
-            if (node == nullptr)
+            if (expected->type != ExprNodeType::VARIABLE)
             {
-                return 0;
+                AssertDouble(expected->value, actual->value);
             }
 
-            if (node->type == ExprNodeType::NUMBER ||
-                node->type == ExprNodeType::VARIABLE)
-            {
-                return CountOperationNodes(node->left) + CountOperationNodes(node->right);
-            }
-
-            return 1 + CountOperationNodes(node->left) + CountOperationNodes(node->right);
+            AssertTreeEqual(actual->left, expected->left);
+            AssertTreeEqual(actual->right, expected->right);
         }
 
         string MakePowerExpression(int operationsCount)
@@ -98,6 +99,18 @@ namespace tests_parseExpression
             }
 
             return expression;
+        }
+
+        ExprNode* MakeExpectedPowerTree(int operationsCount)
+        {
+            ExprNode* root = CreateNumber(1, "1");
+
+            for (int i = 1; i <= operationsCount; i++)
+            {
+                root = CreateBinary(ExprNodeType::POW, "^", root, CreateNumber(1, "1"));
+            }
+
+            return root;
         }
 
     public:
@@ -132,11 +145,13 @@ namespace tests_parseExpression
             vector<Error> errors;
 
             ExprNode* root = parseExpression("123", errors);
+            ExprNode* expected = CreateNumber(123, "123");
 
-            AssertNumber(root, 123, "123");
             Assert::AreEqual(size_t(0), errors.size());
+            AssertTreeEqual(root, expected);
 
             delete root;
+            delete expected;
         }
 
         // 4. Выражение из одного вещественного числа
@@ -145,11 +160,13 @@ namespace tests_parseExpression
             vector<Error> errors;
 
             ExprNode* root = parseExpression("12.34", errors);
+            ExprNode* expected = CreateNumber(12.34, "12.34");
 
-            AssertNumber(root, 12.34, "12.34");
             Assert::AreEqual(size_t(0), errors.size());
+            AssertTreeEqual(root, expected);
 
             delete root;
+            delete expected;
         }
 
         // 5. Выражение из одной переменной
@@ -158,11 +175,13 @@ namespace tests_parseExpression
             vector<Error> errors;
 
             ExprNode* root = parseExpression("x", errors);
+            ExprNode* expected = CreateVariable("x");
 
-            AssertVariable(root, "x");
             Assert::AreEqual(size_t(0), errors.size());
+            AssertTreeEqual(root, expected);
 
             delete root;
+            delete expected;
         }
 
         // 6. Одиночная бинарная операция
@@ -171,13 +190,13 @@ namespace tests_parseExpression
             vector<Error> errors;
 
             ExprNode* root = parseExpression("5-2", errors);
+            ExprNode* expected = CreateBinary(ExprNodeType::SUB, "-", CreateNumber(5, "5"), CreateNumber(2, "2"));
 
-            AssertBinary(root, ExprNodeType::SUB, "-");
-            AssertNumber(root->left, 5, "5");
-            AssertNumber(root->right, 2, "2");
             Assert::AreEqual(size_t(0), errors.size());
+            AssertTreeEqual(root, expected);
 
             delete root;
+            delete expected;
         }
 
         // 7. Унарный минус перед числом
@@ -186,12 +205,13 @@ namespace tests_parseExpression
             vector<Error> errors;
 
             ExprNode* root = parseExpression("-5", errors);
+            ExprNode* expected = CreateUnary(CreateNumber(5, "5"));
 
-            AssertUnary(root, "~");
-            AssertNumber(root->left, 5, "5");
             Assert::AreEqual(size_t(0), errors.size());
+            AssertTreeEqual(root, expected);
 
             delete root;
+            delete expected;
         }
 
         // 8. Несколько унарных минусов подряд
@@ -200,13 +220,13 @@ namespace tests_parseExpression
             vector<Error> errors;
 
             ExprNode* root = parseExpression("--5", errors);
+            ExprNode* expected = CreateUnary(CreateUnary(CreateNumber(5, "5")));
 
-            AssertUnary(root, "~");
-            AssertUnary(root->left, "~");
-            AssertNumber(root->left->left, 5, "5");
             Assert::AreEqual(size_t(0), errors.size());
+            AssertTreeEqual(root, expected);
 
             delete root;
+            delete expected;
         }
 
         // 9. Унарный минус перед выражением в скобках
@@ -215,14 +235,15 @@ namespace tests_parseExpression
             vector<Error> errors;
 
             ExprNode* root = parseExpression("-(2+3)", errors);
+            ExprNode* expected = CreateUnary(
+                CreateBinary(ExprNodeType::ADD, "+", CreateNumber(2, "2"), CreateNumber(3, "3"))
+            );
 
-            AssertUnary(root, "~");
-            AssertBinary(root->left, ExprNodeType::ADD, "+");
-            AssertNumber(root->left->left, 2, "2");
-            AssertNumber(root->left->right, 3, "3");
             Assert::AreEqual(size_t(0), errors.size());
+            AssertTreeEqual(root, expected);
 
             delete root;
+            delete expected;
         }
 
         // 10. Бинарная операция с унарным правым операндом
@@ -231,14 +252,13 @@ namespace tests_parseExpression
             vector<Error> errors;
 
             ExprNode* root = parseExpression("2*-3", errors);
+            ExprNode* expected = CreateBinary(ExprNodeType::MUL, "*", CreateNumber(2, "2"), CreateUnary(CreateNumber(3, "3")));
 
-            AssertBinary(root, ExprNodeType::MUL, "*");
-            AssertNumber(root->left, 2, "2");
-            AssertUnary(root->right, "~");
-            AssertNumber(root->right->left, 3, "3");
             Assert::AreEqual(size_t(0), errors.size());
+            AssertTreeEqual(root, expected);
 
             delete root;
+            delete expected;
         }
 
         // 11. Бинарная операция с унарным левым операндом
@@ -247,14 +267,13 @@ namespace tests_parseExpression
             vector<Error> errors;
 
             ExprNode* root = parseExpression("-2+3", errors);
+            ExprNode* expected = CreateBinary(ExprNodeType::ADD, "+", CreateUnary(CreateNumber(2, "2")), CreateNumber(3, "3"));
 
-            AssertBinary(root, ExprNodeType::ADD, "+");
-            AssertUnary(root->left, "~");
-            AssertNumber(root->left->left, 2, "2");
-            AssertNumber(root->right, 3, "3");
             Assert::AreEqual(size_t(0), errors.size());
+            AssertTreeEqual(root, expected);
 
             delete root;
+            delete expected;
         }
 
         // 12. Приоритет умножения выше сложения
@@ -263,15 +282,17 @@ namespace tests_parseExpression
             vector<Error> errors;
 
             ExprNode* root = parseExpression("2+3*4", errors);
+            ExprNode* expected = CreateBinary(
+                ExprNodeType::ADD, "+",
+                CreateNumber(2, "2"),
+                CreateBinary(ExprNodeType::MUL, "*", CreateNumber(3, "3"), CreateNumber(4, "4"))
+            );
 
-            AssertBinary(root, ExprNodeType::ADD, "+");
-            AssertNumber(root->left, 2, "2");
-            AssertBinary(root->right, ExprNodeType::MUL, "*");
-            AssertNumber(root->right->left, 3, "3");
-            AssertNumber(root->right->right, 4, "4");
             Assert::AreEqual(size_t(0), errors.size());
+            AssertTreeEqual(root, expected);
 
             delete root;
+            delete expected;
         }
 
         // 13. Изменение приоритета с помощью скобок
@@ -280,15 +301,17 @@ namespace tests_parseExpression
             vector<Error> errors;
 
             ExprNode* root = parseExpression("(2+3)*4", errors);
+            ExprNode* expected = CreateBinary(
+                ExprNodeType::MUL, "*",
+                CreateBinary(ExprNodeType::ADD, "+", CreateNumber(2, "2"), CreateNumber(3, "3")),
+                CreateNumber(4, "4")
+            );
 
-            AssertBinary(root, ExprNodeType::MUL, "*");
-            AssertBinary(root->left, ExprNodeType::ADD, "+");
-            AssertNumber(root->left->left, 2, "2");
-            AssertNumber(root->left->right, 3, "3");
-            AssertNumber(root->right, 4, "4");
             Assert::AreEqual(size_t(0), errors.size());
+            AssertTreeEqual(root, expected);
 
             delete root;
+            delete expected;
         }
 
         // 14. Вложенные скобки
@@ -297,20 +320,21 @@ namespace tests_parseExpression
             vector<Error> errors;
 
             ExprNode* root = parseExpression("2*(3+(4-1))", errors);
-
-            AssertBinary(root, ExprNodeType::MUL, "*");
-            AssertNumber(root->left, 2, "2");
-
-            AssertBinary(root->right, ExprNodeType::ADD, "+");
-            AssertNumber(root->right->left, 3, "3");
-
-            AssertBinary(root->right->right, ExprNodeType::SUB, "-");
-            AssertNumber(root->right->right->left, 4, "4");
-            AssertNumber(root->right->right->right, 1, "1");
+            ExprNode* expected = CreateBinary(
+                ExprNodeType::MUL, "*",
+                CreateNumber(2, "2"),
+                CreateBinary(
+                    ExprNodeType::ADD, "+",
+                    CreateNumber(3, "3"),
+                    CreateBinary(ExprNodeType::SUB, "-", CreateNumber(4, "4"), CreateNumber(1, "1"))
+                )
+            );
 
             Assert::AreEqual(size_t(0), errors.size());
+            AssertTreeEqual(root, expected);
 
             delete root;
+            delete expected;
         }
 
         // 15. Левоассоциативность деления
@@ -319,15 +343,17 @@ namespace tests_parseExpression
             vector<Error> errors;
 
             ExprNode* root = parseExpression("9/3/3", errors);
+            ExprNode* expected = CreateBinary(
+                ExprNodeType::DIV, "/",
+                CreateBinary(ExprNodeType::DIV, "/", CreateNumber(9, "9"), CreateNumber(3, "3")),
+                CreateNumber(3, "3")
+            );
 
-            AssertBinary(root, ExprNodeType::DIV, "/");
-            AssertBinary(root->left, ExprNodeType::DIV, "/");
-            AssertNumber(root->left->left, 9, "9");
-            AssertNumber(root->left->right, 3, "3");
-            AssertNumber(root->right, 3, "3");
             Assert::AreEqual(size_t(0), errors.size());
+            AssertTreeEqual(root, expected);
 
             delete root;
+            delete expected;
         }
 
         // 16. Левоассоциативность возведения в степень
@@ -336,15 +362,17 @@ namespace tests_parseExpression
             vector<Error> errors;
 
             ExprNode* root = parseExpression("2^3^2", errors);
+            ExprNode* expected = CreateBinary(
+                ExprNodeType::POW, "^",
+                CreateBinary(ExprNodeType::POW, "^", CreateNumber(2, "2"), CreateNumber(3, "3")),
+                CreateNumber(2, "2")
+            );
 
-            AssertBinary(root, ExprNodeType::POW, "^");
-            AssertBinary(root->left, ExprNodeType::POW, "^");
-            AssertNumber(root->left->left, 2, "2");
-            AssertNumber(root->left->right, 3, "3");
-            AssertNumber(root->right, 2, "2");
             Assert::AreEqual(size_t(0), errors.size());
+            AssertTreeEqual(root, expected);
 
             delete root;
+            delete expected;
         }
 
         // 17. Приоритет унарного минуса выше степени
@@ -353,14 +381,13 @@ namespace tests_parseExpression
             vector<Error> errors;
 
             ExprNode* root = parseExpression("-2^3", errors);
+            ExprNode* expected = CreateBinary(ExprNodeType::POW, "^", CreateUnary(CreateNumber(2, "2")), CreateNumber(3, "3"));
 
-            AssertBinary(root, ExprNodeType::POW, "^");
-            AssertUnary(root->left, "~");
-            AssertNumber(root->left->left, 2, "2");
-            AssertNumber(root->right, 3, "3");
             Assert::AreEqual(size_t(0), errors.size());
+            AssertTreeEqual(root, expected);
 
             delete root;
+            delete expected;
         }
 
         // 18. Выражение с переменными
@@ -369,15 +396,17 @@ namespace tests_parseExpression
             vector<Error> errors;
 
             ExprNode* root = parseExpression("a+b*c", errors);
+            ExprNode* expected = CreateBinary(
+                ExprNodeType::ADD, "+",
+                CreateVariable("a"),
+                CreateBinary(ExprNodeType::MUL, "*", CreateVariable("b"), CreateVariable("c"))
+            );
 
-            AssertBinary(root, ExprNodeType::ADD, "+");
-            AssertVariable(root->left, "a");
-            AssertBinary(root->right, ExprNodeType::MUL, "*");
-            AssertVariable(root->right->left, "b");
-            AssertVariable(root->right->right, "c");
             Assert::AreEqual(size_t(0), errors.size());
+            AssertTreeEqual(root, expected);
 
             delete root;
+            delete expected;
         }
 
         // 19. Сложное корректное выражение
@@ -386,20 +415,25 @@ namespace tests_parseExpression
             vector<Error> errors;
 
             ExprNode* root = parseExpression("a1*(-2.5+b)^3", errors);
-
-            AssertBinary(root, ExprNodeType::MUL, "*");
-            AssertVariable(root->left, "a1");
-
-            AssertBinary(root->right, ExprNodeType::POW, "^");
-            AssertBinary(root->right->left, ExprNodeType::ADD, "+");
-            AssertUnary(root->right->left->left, "~");
-            AssertNumber(root->right->left->left->left, 2.5, "2.5");
-            AssertVariable(root->right->left->right, "b");
-            AssertNumber(root->right->right, 3, "3");
+            ExprNode* expected = CreateBinary(
+                ExprNodeType::MUL, "*",
+                CreateVariable("a1"),
+                CreateBinary(
+                    ExprNodeType::POW, "^",
+                    CreateBinary(
+                        ExprNodeType::ADD, "+",
+                        CreateUnary(CreateNumber(2.5, "2.5")),
+                        CreateVariable("b")
+                    ),
+                    CreateNumber(3, "3")
+                )
+            );
 
             Assert::AreEqual(size_t(0), errors.size());
+            AssertTreeEqual(root, expected);
 
             delete root;
+            delete expected;
         }
 
         // 20. Выражение с пробелами между токенами
@@ -408,13 +442,13 @@ namespace tests_parseExpression
             vector<Error> errors;
 
             ExprNode* root = parseExpression("  12  +   abc ", errors);
+            ExprNode* expected = CreateBinary(ExprNodeType::ADD, "+", CreateNumber(12, "12"), CreateVariable("abc"));
 
-            AssertBinary(root, ExprNodeType::ADD, "+");
-            AssertNumber(root->left, 12, "12");
-            AssertVariable(root->right, "abc");
             Assert::AreEqual(size_t(0), errors.size());
+            AssertTreeEqual(root, expected);
 
             delete root;
+            delete expected;
         }
 
         // 21. Выражение из 100 операций
@@ -424,14 +458,13 @@ namespace tests_parseExpression
             string expression = MakePowerExpression(100);
 
             ExprNode* root = parseExpression(expression, errors);
+            ExprNode* expected = MakeExpectedPowerTree(100);
 
-            Assert::IsNotNull(root);
-            Assert::IsTrue(ExprNodeType::POW == root->type);
-            Assert::AreEqual(201, CountNodes(root));
-            Assert::AreEqual(100, CountOperationNodes(root));
             Assert::AreEqual(size_t(0), errors.size());
+            AssertTreeEqual(root, expected);
 
             delete root;
+            delete expected;
         }
 
         // 22. Выражение из 101 операции
@@ -638,5 +671,6 @@ namespace tests_parseExpression
             Assert::AreEqual(size_t(1), errors.size());
             AssertError(errors[0], ErrorType::MISSING_OPERATOR, -1, "");
         }
+
     };
 }
