@@ -370,21 +370,73 @@ ExprNode* buildTree(const vector<Token>& postfix, vector<Error>& errors)
 
 ExprNode* parseExpression(const string& expression, vector<Error>& errors)
 {
-    bool onlySpaces = true;
-    for (char ch : expression)
+    // Разбить входную строку на токены функцией tokenize
+    vector<Token> tokens = tokenize(expression, errors);
+    // Если в процессе токенизации возникли ошибки парсинга
+    if (!errors.empty())
     {
-        if (ch != ' ' && ch != '\t' && ch != '\n' && ch != '\r')
-        {
-            onlySpaces = false;
-            break;
-        }
-    }
-    if (expression.empty() || onlySpaces)
-    {
-        errors.push_back(Error{ ErrorType::MISSING_OPERATOR, -1, "" });
+        // Вернуть nullptr
         return nullptr;
     }
-    return nullptr;
+    // Преобразовать список токенов в постфиксную форму функцией toPostfix
+    vector<Token> postfix = toPostfix(tokens, errors);
+    // Если при преобразовании в постфиксную форму возникли ошибки парсинга
+    if (!errors.empty())
+    {
+        // Вернуть nullptr
+        return nullptr;
+    }
+    // Построить дерево выражения функцией buildTree
+    ExprNode* root = buildTree(postfix, errors);
+    // Если при построении дерева возникли ошибки парсинга
+    if (!errors.empty())
+    {
+        // Вернуть nullptr
+        return nullptr;
+    }
+    // Если дерево не построено, добавить ошибку MISSING_OPERATOR
+    if (root == nullptr)
+    {
+        errors.push_back({ ErrorType::MISSING_OPERATOR, -1, "" });
+        return nullptr;
+    }
+    // Посчитать кол-во операций в дереве
+    int operationsCount = 0;
+    stack<ExprNode*> nodes;
+    nodes.push(root);
+    while (!nodes.empty())
+    {
+        ExprNode* current = nodes.top();
+        nodes.pop();
+        if (current->type == ExprNodeType::ADD ||
+            current->type == ExprNodeType::SUB ||
+            current->type == ExprNodeType::MUL ||
+            current->type == ExprNodeType::DIV ||
+            current->type == ExprNodeType::POW)
+        {
+            operationsCount++;
+        }
+        if (current->left != nullptr)
+        {
+            nodes.push(current->left);
+        }
+        if (current->right != nullptr)
+        {
+            nodes.push(current->right);
+        }
+    }
+    // Если количество операций превышает 100.
+    if (operationsCount > 100)
+    {
+        // Добавить ошибку TOO_MANY_OPERATIONS
+        errors.push_back({ ErrorType::TOO_MANY_OPERATIONS, -1, "" });
+        // Удалить корень дерева выражения
+        delete root;
+        // Вернуть nullptr
+        return nullptr;
+    }
+    // Вернуть корень дерева выражения
+    return root;
 }
 
 ExprNode::ExprNode(double val)
