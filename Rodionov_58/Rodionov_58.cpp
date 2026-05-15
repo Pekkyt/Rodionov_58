@@ -250,7 +250,122 @@ vector<Token> toPostfix(const vector<Token>& tokens, vector<Error>& errors) {
 
 ExprNode* buildTree(const vector<Token>& postfix, vector<Error>& errors)
 {
-    return nullptr;
+    // Создать пустой стек узлов дерева.
+    stack<ExprNode*> nodes;
+    // Для каждого токена постфиксной записи
+    for (Token token : postfix)
+    {
+        // Если токен является числом
+        if (token.type == TokenType::NUMBER)
+        {
+            // Создать узел типа NUMBER
+            ExprNode* node = new ExprNode(stod(token.text));
+            node->token = token.text;
+            // Поместить узел в стек
+            nodes.push(node);
+        }
+        // Если токен является переменной
+        else if (token.type == TokenType::VARIABLE)
+        {
+            // Создать узел типа VARIABLE
+            ExprNode* node = new ExprNode(0);
+            node->type = ExprNodeType::VARIABLE;
+            node->token = token.text;
+            // Поместить узел в стек
+            nodes.push(node);
+        }
+        // Если токен является унарным минусом
+        else if (token.type == TokenType::OPERATOR && token.text == "~")
+        {
+            // Если стек пуст
+            if (nodes.empty())
+            {
+                // Добавить ошибку MISSING_OPERAND
+                errors.push_back({ ErrorType::MISSING_OPERAND, token.position, token.text });
+                // Освободить память уже созданных узлов
+                while (!nodes.empty())
+                {
+                    delete nodes.top();
+                    nodes.pop();
+                }
+                // Вернуть nullptr
+                return nullptr;
+            }
+            // Извлечь один узел из стека
+            ExprNode* operand = nodes.top();
+            nodes.pop();
+            // Создать новый узел типа UNARY_MINUS
+            // Сделать извлечённый узел потомком нового узла
+            ExprNode* node = new ExprNode(ExprNodeType::UNARY_MINUS, operand, nullptr);
+            node->token = token.text;
+            // Поместить новый узел в стек
+            nodes.push(node);
+        }
+        // Если токен является бинарной операцией
+        else if (token.type == TokenType::OPERATOR)
+        {
+            // Если в стеке меньше двух узлов
+            if (nodes.size() < 2)
+            {
+                // Добавить ошибку MISSING_OPERAND
+                errors.push_back({ ErrorType::MISSING_OPERAND, token.position, token.text });
+                // Освободить память уже созданных узлов
+                while (!nodes.empty())
+                {
+                    delete nodes.top();
+                    nodes.pop();
+                }
+                // Вернуть nullptr
+                return nullptr;
+            }
+            // Извлечь правый операнд
+            ExprNode* right = nodes.top();
+            nodes.pop();
+            // Извлечь левый операнд
+            ExprNode* left = nodes.top();
+            nodes.pop();
+            // Создать новый узел соответствующего типа операции
+            ExprNodeType type = ExprNodeType::ADD;
+            if (token.text == "+") { type = ExprNodeType::ADD; }
+            else if (token.text == "-") { type = ExprNodeType::SUB; }
+            else if (token.text == "*") { type = ExprNodeType::MUL; }
+            else if (token.text == "/") { type = ExprNodeType::DIV; }
+            else if (token.text == "^") { type = ExprNodeType::POW; }
+            // Связать новый узел с левым и правым потомками
+            ExprNode* node = new ExprNode(type, left, right);
+            node->token = token.text;
+            // Поместить новый узел в стек
+            nodes.push(node);
+        }
+    }
+    // После обработки всех токенов
+    // Если стек пуст, вернуть nullptr
+    if (nodes.empty())
+    {
+        return nullptr;
+    }
+    // Если в стеке больше одного элемента
+    if (nodes.size() > 1)
+    {
+        // Добавить ошибку MISSING_OPERATOR
+        Error error = { ErrorType::MISSING_OPERATOR, -1, "" };
+        if (!postfix.empty())
+        {
+            error.position = postfix.back().position;
+            error.token = postfix.back().text;
+        }
+        errors.push_back(error);
+        // Освободить память всех узлов в стеке
+        while (!nodes.empty())
+        {
+            delete nodes.top();
+            nodes.pop();
+        }
+        // Вернуть nullptr
+        return nullptr;
+    }
+    // Вернуть верхний элемент стека как корень дерева
+    return nodes.top();
 }
 
 ExprNode* parseExpression(const string& expression, vector<Error>& errors)
