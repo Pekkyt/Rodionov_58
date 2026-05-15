@@ -4,6 +4,7 @@
 #include <string>
 #include <map>
 #include <cmath>
+#include <stack>
 #include <cctype>
 #include "Header.h"
 using namespace std;
@@ -175,9 +176,76 @@ vector<Token> tokenize(const string& s, vector<Error>& errors)
     return t;
 }
 
-vector<Token> toPostfix(const vector<Token>& tokens, vector<Error>& errors)
-{
-    return {};
+vector<Token> toPostfix(const vector<Token>& tokens, vector<Error>& errors) {
+    // Создать пустой выходной список
+    vector<Token> postfix;
+    // Создать пустой стек операторов
+    stack<Token> operators;
+    // Для каждого токена
+    for (Token token : tokens)
+    {
+        // Если токен является числом или переменной
+        if (token.type == TokenType::NUMBER || token.type == TokenType::VARIABLE)
+        {
+            // Добавить его в выходной список
+            postfix.push_back(token);
+        }
+        // Если токен является открывающей скобкой
+        else if (token.type == TokenType::LEFT_BRACKET)
+        {
+            // Поместить его в стек
+            operators.push(token);
+        }
+        // Если токен является закрывающей скобкой
+        else if (token.type == TokenType::RIGHT_BRACKET)
+        {
+            // Извлекать операторы из стека в выходной список до открывающей скобки
+            while (!operators.empty() && operators.top().type != TokenType::LEFT_BRACKET)
+            {
+                postfix.push_back(operators.top());
+                operators.pop();
+            }
+            // Если открывающая скобка не найдена, добавить ошибку MISMATCHED_BRACKETS
+            if (operators.empty())
+            {
+                errors.push_back({ ErrorType::MISMATCHED_BRACKETS, token.position, token.text });
+                return {};
+            }
+            // Удалить открывающую скобку из стека
+            operators.pop();
+        }
+        // Если токен является оператором
+        else if (token.type == TokenType::OPERATOR)
+        {
+
+            // Пока стек не пуст, на вершине стека находится оператор, сравнить приоритет текущего оператора и оператора на вершине стека getPriority
+            // Если оператор со стека должен быть выполнен раньше или одновременно, перенести его в выходной список
+            while (!operators.empty() && operators.top().type == TokenType::OPERATOR && token.text != "~" && getPriority(operators.top().text) >= getPriority(token.text))
+            {
+                // Перенести оператор из стека в выходной список
+                postfix.push_back(operators.top());
+                operators.pop();
+            }
+            // Поместить текущий оператор в стек
+            operators.push(token);
+        }
+    }
+    // После обработки всех токенов перенести оставшиеся операторы из стека в выходной список
+    while (!operators.empty())
+    {
+        // Если среди оставшихся элементов стека обнаружены скобки
+        if (operators.top().type == TokenType::LEFT_BRACKET || operators.top().type == TokenType::RIGHT_BRACKET)
+        {
+            // Добавить ошибку MISMATCHED_BRACKETS
+            errors.push_back({ ErrorType::MISMATCHED_BRACKETS,operators.top().position,operators.top().text });
+            return {};
+        }
+        // Перенести оставшийся оператор в выходной список
+        postfix.push_back(operators.top());
+        operators.pop();
+    }
+    // Вернуть постфиксную форму выражения
+    return postfix;
 }
 
 ExprNode* buildTree(const vector<Token>& postfix, vector<Error>& errors)
