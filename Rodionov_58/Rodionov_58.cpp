@@ -8,7 +8,8 @@
 #include "Header.h"
 using namespace std;
 
-vector<Token> tokenize(const string& s, vector<Error>& errors) {
+vector<Token> tokenize(const string& s, vector<Error>& errors) 
+{
     // Создать пустой список токенов
     vector<Token> t;
     // Установить индекс текущего символа в начало строки
@@ -236,6 +237,20 @@ double calculate(ExprNode* node, const map<string, double>& variables, vector<Er
         return 0;
     }
 
+    return 0;
+}
+
+int getPriority(const string& token) 
+{
+    // Если токен - унарный минус, вернуть наивысший приоритет
+    if (token == "~") return 4;
+    // Если токен - "^", вернуть приоритет степени
+    if (token == "^") return 3;
+    //  Если токен - "*" или "/", вернуть следующий приоритет
+    if (token == "*" || token == "/") return 2;
+    // Если токен - "+" или "-" , вернуть следующий приоритет
+    if (token == "+" || token == "-") return 1;
+    // Иначе вернуть 0
     return 0;
 }
 
