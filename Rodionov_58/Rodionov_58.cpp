@@ -599,6 +599,24 @@ bool isValidVariableName(const string& name)
     return true;
 }
 
+string trim(string s) 
+{
+    // Пока строка не пуста и первый символ является пробелом
+    while (!s.empty() && isspace((unsigned char)s.front())) 
+    {
+        // Удалить первый символ строки
+        s.erase(s.begin());
+    }
+    // Пока строка не пуста и последний символ является пробелом
+    while (!s.empty() && isspace((unsigned char)s.back())) 
+    {
+        // Удалить последний символ строки
+        s.pop_back();
+    }
+    // Вернуть строку без начальных и конечных пробелов
+    return s;
+}
+
 int main(int argc, char* argv[])
 {
     return 0;
