@@ -574,6 +574,31 @@ int getPriority(const string& token)
     return 0;
 }
 
+bool isValidVariableName(const string& name)
+{
+    // Если строка пуста, вернуть false
+    if (name.empty())
+    {
+        return false;
+    }
+    // Проверить, что первый символ - латинская буква
+    if ((unsigned char)name[0] >= 128 || !isalpha((unsigned char)name[0]))
+    {
+        return false;
+    }
+    // Проверить, что все остальные символы являются латинскими буквами или цифрами
+    for (int i = 1; i < (int)name.size(); i++)
+    {
+        if ((unsigned char)name[i] >= 128 || !isalnum((unsigned char)name[i]))
+        {
+            // Если условие не выполнено, вернуть false
+            return false;
+        }
+    }
+    // Если все условия выполнены, вернуть true
+    return true;
+}
+
 int main(int argc, char* argv[])
 {
     return 0;
