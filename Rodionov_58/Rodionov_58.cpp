@@ -8,6 +8,7 @@
 #include <cctype>
 #include "Header.h"
 using namespace std;
+static int NEXT_NODE_ID = 0;
 
 vector<Token> tokenize(const string& s, vector<Error>& errors) 
 {
@@ -445,7 +446,7 @@ ExprNode::ExprNode(double val)
     type = ExprNodeType::NUMBER;
     left = nullptr;
     right = nullptr;
-    nodeId = 0;
+    nodeId = NEXT_NODE_ID++;
     token = "";
 }
 
@@ -455,13 +456,15 @@ ExprNode::ExprNode(ExprNodeType type, ExprNode* left, ExprNode* right)
     this->type = type;
     this->left = left;
     this->right = right;
-    nodeId = 0;
+    nodeId = NEXT_NODE_ID++;
     token = "";
 }
 
 ExprNode::~ExprNode()
 {
+    // Если левый потомок существует, удалить левый потомок
     delete left;
+    // Если правый потомок существует, удалить правый потомок
     delete right;
 }
 
