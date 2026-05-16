@@ -2,9 +2,11 @@
 #include <iostream>
 #include <vector>
 #include <string>
+#include <iomanip>
 #include <map>
 #include <cmath>
 #include <stack>
+#include <sstream>
 #include <cctype>
 #include "Header.h"
 using namespace std;
@@ -615,6 +617,34 @@ string trim(string s)
     }
     // Вернуть строку без начальных и конечных пробелов
     return s;
+}
+
+string formatNumber(double value)
+{
+    // Если число является целым
+    if (fabs(value - round(value)) < 1e-9)
+    {
+        // Вернуть его без дробной части
+        return to_string((long long)round(value));
+    }
+    // Иначе округлить число до трёх знаков после точки и подготовить поток для преобразования числа в строку
+    ostringstream out;
+    // Округлить число до трёх знаков после точки
+    out << fixed << setprecision(3) << value;
+    // Преобразовать число в строку
+    string result = out.str();
+    // Удалить лишние нули в конце дробной части
+    while (!result.empty() && result.back() == '0')
+    {
+        result.pop_back();
+    }
+    // Если после удаления нулей последним символом осталась точка, удалить её
+    if (!result.empty() && result.back() == '.')
+    {
+        result.pop_back();
+    }
+    // Вернуть строковое представление числа
+    return result;
 }
 
 int main(int argc, char* argv[])
