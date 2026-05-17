@@ -11,6 +11,7 @@
 #include "Header.h"
 using namespace std;
 static int NEXT_NODE_ID = 0;
+static int NEXT_ACTION_ID = 1;
 
 vector<Token> tokenize(const string& s, vector<Error>& errors) 
 {
@@ -742,6 +743,74 @@ bool processAssignments(const vector<string>& lines, map<string, double>& variab
     }
     // Если вектор ошибок пуст, вернуть true, иначе вернуть false
     return errors.empty();
+}
+
+void writeGraph(ExprNode* root, ofstream& out)
+{
+    // Обнулить номер действия перед генерацией дерева
+    NEXT_ACTION_ID = 1;
+    // Записать строку digraph {
+    out << "digraph {\n";
+    // Сгенерировать дерево функцией generateGraph.
+    generateGraph(root, out);
+    // Записать строку }
+    out << "}\n";
+}
+
+void generateGraph(ExprNode* node, ofstream& out)
+{
+    // Если текущий узел пуст
+    if (node == nullptr)
+    {
+        // Завершить работу функции
+        return;
+    }
+    // Сформировать строковое представление текущего узла
+    string label;
+    // Если узел имеет тип NUMBER
+    if (node->type == ExprNodeType::NUMBER)
+    {
+        // Использовать числовое значение узла как подпись
+        label = formatNumber(node->value);
+    }
+    // Если узел имеет тип VARIABLE
+    else if (node->type == ExprNodeType::VARIABLE)
+    {
+        // Записать в качестве подписи узла имя переменной
+        label = node->token;
+    }
+    // Если узел имеет тип UNARY_MINUS
+    else if (node->type == ExprNodeType::UNARY_MINUS)
+    {
+        // Использовать вычисленное значение узла как подпись
+        label = formatNumber(node->value);
+    }
+    // Если узел является операторным
+    else
+    {
+        // Сформировать подпись в формате <номер_действия>: <операция>: <результат>
+        label = to_string(NEXT_ACTION_ID) + ": " + node->token + ": " + formatNumber(node->value);
+        // Перейти к следующему номеру действия
+        NEXT_ACTION_ID++;
+    }
+    // Записать в файл строку описания узла в формате <номер_узла> [label="<строковое_представление_узла>"];
+    out << node->nodeId << " [label=\"" << label << "\"];\n";
+    // Если существует левый потомок
+    if (node->left != nullptr)
+    {
+        // Рекурсивно вызвать generateGraph для левого потомка
+        generateGraph(node->left, out);
+        // Записать связь <номер_текущего_узла> -> <номер_левого_потомка>;
+        out << node->nodeId << " -> " << node->left->nodeId << ";\n";
+    }
+    // Если существует правый потомок
+    if (node->right != nullptr)
+    {
+        // Рекурсивно вызвать generateGraph для правого потомка
+        generateGraph(node->right, out);
+        // Записать связь <номер_текущего_узла> -> <номер_правого_потомка>;
+        out << node->nodeId << " -> " << node->right->nodeId << ";\n";
+    }
 }
 
 int main(int argc, char* argv[])
