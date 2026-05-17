@@ -647,6 +647,103 @@ string formatNumber(double value)
     return result;
 }
 
+bool processAssignments(const vector<string>& lines, map<string, double>& variables, vector<Error>& errors)
+{
+    // Если количество строк меньше 2
+    if (lines.size() < 2)
+    {
+        // Вернуть true, так как присваивания могут отсутствовать
+        return true;
+    }
+    // Для каждой строки, кроме последней
+    for (int i = 0; i + 1 < (int)lines.size(); i++)
+    {
+        string line = lines[i];
+        // Посчитать кол-во символов "="
+        int countEquals = 0;
+        int equalPosition = -1;
+        for (int j = 0; j < (int)line.size(); j++)
+        {
+            if (line[j] == '=')
+            {
+                countEquals++;
+                equalPosition = j;
+            }
+        }
+        // Если символ "=" отсутствует или встречается более одного раза
+        if (countEquals != 1)
+        {
+            // Добавить ошибку INVALID_ASSIGNMENT
+            errors.push_back({ ErrorType::INVALID_ASSIGNMENT, -1, "" });
+            // Перейти к следующей строке
+            continue;
+        }
+        // Разделить строку на левую и правую части по символу "="
+        string leftPart = line.substr(0, equalPosition);
+        string rightPart = line.substr(equalPosition + 1);
+        // Удалить лишние пробелы в левой и правой частях функцией trim
+        string left = trim(leftPart);
+        string right = trim(rightPart);
+        // Если левая часть пуста или правая часть пуста
+        if (left.empty() || right.empty())
+        {
+            // Добавить ошибку INVALID_ASSIGNMENT
+            errors.push_back({ ErrorType::INVALID_ASSIGNMENT, -1, "" });
+            // Перейти к следующей строке
+            continue;
+        }
+        // Проверить корректность имени переменной функцией isValidVariableName
+        // Если имя переменной некорректно
+        if (!isValidVariableName(left))
+        {
+            // Добавить ошибку INVALID_VARIABLE_NAME
+            errors.push_back({ ErrorType::INVALID_VARIABLE_NAME, -1, left });
+            // Перейти к следующей строке
+            continue;
+        }
+        // Создать отдельный вектор ошибок для правой части присваивания
+        vector<Error> localErrors;
+        // Обнулить счётчик узлов перед построением временного дерева
+        NEXT_NODE_ID = 0;
+        // Распарсить правую часть присваивания функцией parseExpression
+        ExprNode* root = parseExpression(right, localErrors);
+        // Если при парсинге возникли ошибки
+        if (!localErrors.empty() || root == nullptr)
+        {
+            // Перенести найденные ошибки в общий список ошибок
+            for (Error error : localErrors)
+            {
+                errors.push_back(error);
+            }
+            // Если дерево выражения было создано, удалить его корень
+            delete root;
+            // Перейти к следующей строке
+            continue;
+        }
+        // Вычислить значение выражения функцией calculate
+        double value = calculate(root, variables, localErrors);
+        // Если при вычислении возникли ошибки
+        if (!localErrors.empty())
+        {
+            // Перенести найденные ошибки в общий список ошибок
+            for (Error error : localErrors)
+            {
+                errors.push_back(error);
+            }
+            // Удалить дерево
+            delete root;
+            // Перейти к следующей строке
+            continue;
+        }
+        // Сохранить полученное значение в таблицу variables по имени переменной. Если переменная уже существует, перезаписать её значение
+        variables[left] = value;
+        // Удалить корень дерева выражения
+        delete root;
+    }
+    // Если вектор ошибок пуст, вернуть true, иначе вернуть false
+    return errors.empty();
+}
+
 int main(int argc, char* argv[])
 {
     return 0;
