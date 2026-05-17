@@ -813,6 +813,33 @@ void generateGraph(ExprNode* node, ofstream& out)
     }
 }
 
+vector<string> readFile(const string& filename, vector<Error>& errors)
+{
+    // Попытаться открыть входной файл
+    ifstream in(filename);
+    // Если файл не удалось открыть
+    if (!in)
+    {
+        // Добавить ошибку INVALID_INPUT_FILE
+        errors.push_back({ ErrorType::INVALID_INPUT_FILE, -1, "" });
+        // Вернуть пустой вектор
+        return {};
+    }
+    // Создать пустой вектор строк
+    vector<string> lines;
+    string line;
+    // Считывать файл построчно до конца
+    while (getline(in, line))
+    {
+        // Каждую считанную строку добавить в вектор
+        lines.push_back(line);
+    }
+    // Закрыть файл
+    in.close();
+    // Вернуть вектор строк
+    return lines;
+}
+
 int main(int argc, char* argv[])
 {
     return 0;
