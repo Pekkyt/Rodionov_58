@@ -930,5 +930,131 @@ void printError(const Error& error)
 
 int main(int argc, char* argv[])
 {
+    // Проверить количество переданных аргументов командной строки
+    if (argc != 3)
+    {
+        // Если количество аргументов не равно 3, вывести сообщение о правильном использовании программы
+        cout << "Использование: program input.txt output.txt\n";
+        // Завершить программу с ошибкой
+        return 1;
+    }
+    // Создать пустой список ошибок
+    vector<Error> errors;
+    // Считать входной файл функцией readFile
+    vector<string> lines = readFile(argv[1], errors);
+    // Если при чтении файла возникли ошибки
+    if (!errors.empty())
+    {
+        // Вывести сообщения обо всех найденных ошибках
+        for (Error error : errors)
+        {
+            printError(error);
+        }
+        // Завершить программу с ошибкой
+        return 1;
+    }
+    // Проверить, что входной файл не пуст
+    if (lines.empty())
+    {
+        // Если входной файл пуст, добавить ошибку EMPTY_INPUT_FILE
+        errors.push_back({ ErrorType::EMPTY_INPUT_FILE, -1, "" });
+    }
+    // Проверить, что количество строк не превышает допустимое значение
+    if ((int)lines.size() > 100)
+    {
+        // Если количество строк больше 100, добавить ошибку TOO_MANY_LINES
+        errors.push_back({ ErrorType::TOO_MANY_LINES, -1, "" });
+    }
+    // Для каждой строки входного файла проверить её длину
+    for (string line : lines)
+    {
+        // Если длина строки превышает 1000 символов
+        if ((int)line.size() > 1000)
+        {
+            // Добавить ошибку LINE_TOO_LONG
+            errors.push_back({ ErrorType::LINE_TOO_LONG, -1, "" });
+            // Прервать проверку, так как ошибка уже найдена
+            break;
+        }
+    }
+    // Проверить наличие итогового арифметического выражения в последней строке файла
+    if (lines.empty() || trim(lines.back()).empty())
+    {
+        // Если последняя строка отсутствует или состоит только из пробелов, добавить ошибку MISSING_FINAL_EXPRESSION
+        errors.push_back({ ErrorType::MISSING_FINAL_EXPRESSION, -1, "" });
+    }
+    // Если были обнаружены ошибки входных данных
+    if (!errors.empty())
+    {
+        // Вывести сообщения обо всех найденных ошибках
+        for (Error error : errors)
+        {
+            printError(error);
+        }
+        // Завершить программу с ошибкой
+        return 1;
+    }
+    // Создать таблицу значений переменных
+    map<string, double> variables;
+    // Обработать строки присваивания переменных функцией processAssignments
+    if (!processAssignments(lines, variables, errors))
+    {
+        // Если при обработке присваиваний возникли ошибки, вывести их
+        for (Error error : errors)
+        {
+            printError(error);
+        }
+        // Завершить программу с ошибкой
+        return 1;
+    }
+    // Обнулить счётчик номеров узлов перед построением дерева итогового выражения
+    NEXT_NODE_ID = 0;
+    // Распарсить последнюю строку входного файла как итоговое арифметическое выражение
+    ExprNode* root = parseExpression(lines.back(), errors);
+    // Если при парсинге возникли ошибки или дерево не было построено
+    if (!errors.empty() || root == nullptr)
+    {
+        // Вывести сообщения обо всех найденных ошибках
+        for (Error error : errors)
+        {
+            printError(error);
+        }
+        // Если дерево выражения было частично создано, удалить его корень
+        delete root;
+        // Завершить программу с ошибкой
+        return 1;
+    }
+    // Вычислить значение дерева выражения функцией calculate
+    calculate(root, variables, errors);
+    // Если при вычислении возникли ошибки
+    if (!errors.empty())
+    {
+        // Вывести сообщения обо всех найденных ошибках
+        for (Error error : errors)
+        {
+            printError(error);
+        }
+        // Удалить корень дерева выражения
+        delete root;
+        // Завершить программу с ошибкой
+        return 1;
+    }
+    // Открыть выходной файл для записи
+    ofstream out(argv[2]);
+    // Если выходной файл невозможно создать или открыть
+    if (!out)
+    {
+        // Вывести сообщение об ошибке выходного файла
+        printError({ ErrorType::INVALID_OUTPUT_FILE, -1, "" });
+        // Удалить корень дерева выражения
+        delete root;
+        // Завершить программу с ошибкой
+        return 1;
+    }
+    // Записать дерево выражения в выходной файл функцией writeGraph
+    writeGraph(root, out);
+    // Удалить корень дерева выражения и освободить память
+    delete root;
+    // Завершить программу успешно
     return 0;
 }
