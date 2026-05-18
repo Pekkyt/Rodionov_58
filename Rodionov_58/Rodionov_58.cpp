@@ -8,6 +8,8 @@
 #include <stack>
 #include <sstream>
 #include <cctype>
+#include <clocale>
+#include <cstdlib>
 #include "Header.h"
 using namespace std;
 static int NEXT_NODE_ID = 0;
@@ -416,7 +418,8 @@ ExprNode* parseExpression(const string& expression, vector<Error>& errors)
             current->type == ExprNodeType::SUB ||
             current->type == ExprNodeType::MUL ||
             current->type == ExprNodeType::DIV ||
-            current->type == ExprNodeType::POW)
+            current->type == ExprNodeType::POW ||
+            current->type == ExprNodeType::UNARY_MINUS)
         {
             operationsCount++;
         }
@@ -759,57 +762,68 @@ void writeGraph(ExprNode* root, ofstream& out)
 
 void generateGraph(ExprNode* node, ofstream& out)
 {
-    // Если текущий узел пуст
+    // Если текущий узел пуст:
     if (node == nullptr)
     {
         // Завершить работу функции
         return;
     }
+    // Если существует левый потомок:
+    if (node->left != nullptr)
+    {
+        // Рекурсивно вызвать generateGraph для левого потомка
+        generateGraph(node->left, out);
+    }
+    // Если существует правый потомок:
+    if (node->right != nullptr)
+    {
+        // Рекурсивно вызвать generateGraph для правого потомка
+        generateGraph(node->right, out);
+    }
     // Сформировать строковое представление текущего узла
     string label;
-    // Если узел имеет тип NUMBER
+    // Если узел имеет тип NUMBER:
     if (node->type == ExprNodeType::NUMBER)
     {
         // Использовать числовое значение узла как подпись
         label = formatNumber(node->value);
     }
-    // Если узел имеет тип VARIABLE
+    // Если узел имеет тип VARIABLE:
     else if (node->type == ExprNodeType::VARIABLE)
     {
         // Записать в качестве подписи узла имя переменной
         label = node->token;
     }
-    // Если узел имеет тип UNARY_MINUS
+    // Если узел имеет тип UNARY_MINUS:
     else if (node->type == ExprNodeType::UNARY_MINUS)
     {
-        // Использовать вычисленное значение узла как подпись
-        label = formatNumber(node->value);
+        // Считать унарный минус отдельной операцией
+        // Подпись формируется в формате <номер_действия>: <операция>: <результат>.
+        label = to_string(NEXT_ACTION_ID) + ": -: " + formatNumber(node->value);
+        // Перейти к следующему номеру действия
+        NEXT_ACTION_ID++;
     }
-    // Если узел является операторным
+    // Если узел является бинарным операторным узлом:
     else
     {
-        // Сформировать подпись в формате <номер_действия>: <операция>: <результат>
+        // Сформировать подпись в формате <номер_действия>: <операция>: <результат>.
         label = to_string(NEXT_ACTION_ID) + ": " + node->token + ": " + formatNumber(node->value);
-        // Перейти к следующему номеру действия
+        // Перейти к следующему номеру действия.
         NEXT_ACTION_ID++;
     }
     // Записать в файл строку описания узла в формате <номер_узла> [label="<строковое_представление_узла>"];
     out << node->nodeId << " [label=\"" << label << "\"];\n";
-    // Если существует левый потомок
+    // Если существует левый потомок:
     if (node->left != nullptr)
     {
-        // Рекурсивно вызвать generateGraph для левого потомка
-        generateGraph(node->left, out);
-        // Записать связь <номер_текущего_узла> -> <номер_левого_потомка>;
-        out << node->nodeId << " -> " << node->left->nodeId << ";\n";
+        // Записать связь <номер_левого_потомка> -> <номер_текущего_узла>;
+        out << node->left->nodeId << " -> " << node->nodeId << ";\n";
     }
-    // Если существует правый потомок
+    // Если существует правый потомок:
     if (node->right != nullptr)
     {
-        // Рекурсивно вызвать generateGraph для правого потомка
-        generateGraph(node->right, out);
-        // Записать связь <номер_текущего_узла> -> <номер_правого_потомка>;
-        out << node->nodeId << " -> " << node->right->nodeId << ";\n";
+        // Записать связь <номер_правого_потомка> -> <номер_текущего_узла>;
+        out << node->right->nodeId << " -> " << node->nodeId << ";\n";
     }
 }
 
@@ -930,6 +944,8 @@ void printError(const Error& error)
 
 int main(int argc, char* argv[])
 {
+    system("chcp 1251 > nul");
+    setlocale(LC_ALL, "Russian");
     // Проверить количество переданных аргументов командной строки
     if (argc != 3)
     {
