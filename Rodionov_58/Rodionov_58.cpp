@@ -840,6 +840,94 @@ vector<string> readFile(const string& filename, vector<Error>& errors)
     return lines;
 }
 
+void printError(const Error& error)
+{
+    // Определить тип ошибки
+    switch (error.type)
+    {
+        // Выбрать соответствующее текстовое сообщение
+    case ErrorType::INVALID_INPUT_FILE:
+        cout << "Неверно указан файл с входными данными. Возможно, файл не существует.";
+        break;
+
+    case ErrorType::INVALID_OUTPUT_FILE:
+        cout << "Неверно указан файл для выходных данных. Возможно указанного расположения не существует или нет прав на запись.";
+        break;
+
+    case ErrorType::EMPTY_INPUT_FILE:
+        cout << "Ошибка: входной файл пуст.";
+        break;
+
+    case ErrorType::TOO_MANY_LINES:
+        cout << "Программа принимает на вход файлы с общим количеством строк не превышающем 100-а строк. Сократите файл до 100-а строк включительно.";
+        break;
+
+    case ErrorType::LINE_TOO_LONG:
+        cout << "Ошибка: превышено кол-во символов в одной или нескольких входных строк файла.";
+        break;
+
+    case ErrorType::INVALID_SYMBOL:
+        cout << "Ошибка: символ не опознан.";
+        break;
+
+    case ErrorType::INVALID_NUMBER_FORMAT:
+        cout << "Ошибка: некорректный формат записи вещественного числа.";
+        break;
+
+    case ErrorType::NUMBER_OUT_OF_RANGE:
+        cout << "Ошибка: в выражении содержится число выходящее за диапазон [0..2147483647] по модулю.";
+        break;
+
+    case ErrorType::MISMATCHED_BRACKETS:
+        cout << "Ошибка: некорректная расстановка скобок. Возможно отсутствует открывающая или закрывающая скобка.";
+        break;
+
+    case ErrorType::MISSING_OPERAND:
+        cout << "Ошибка: два оператора подряд.";
+        break;
+
+    case ErrorType::MISSING_OPERATOR:
+        cout << "Ошибка: два операнда подряд.";
+        break;
+
+    case ErrorType::TOO_MANY_OPERATIONS:
+        cout << "Ошибка: превышено кол-во операций в математическом выражении. Сократите выражение до 100-а операций включительно.";
+        break;
+
+    case ErrorType::DIVISION_BY_ZERO:
+        cout << "Ошибка: деление на ноль.";
+        break;
+
+    case ErrorType::UNKNOWN_VARIABLE:
+        cout << "Ошибка: используется необъявленная переменная.";
+        break;
+
+    case ErrorType::INVALID_ASSIGNMENT:
+        cout << "Ошибка: некорректный формат присваивания переменной.";
+        break;
+
+    case ErrorType::INVALID_VARIABLE_NAME:
+        cout << "Ошибка: некорректное имя переменной.";
+        break;
+
+    case ErrorType::MISSING_FINAL_EXPRESSION:
+        cout << "Ошибка: отсутствует итоговое арифметическое выражение.";
+        break;
+
+    default:
+        break;
+    }
+    // При необходимости добавить информацию о позиции ошибки
+    if (error.position != -1)
+    {
+        cout << "Позиция ошибки: " << error.position << "\n";
+    }
+    if (!error.token.empty())
+    {
+        cout << "Проблемный элемент: " << error.token << "\n";
+    }
+}
+
 int main(int argc, char* argv[])
 {
     return 0;
