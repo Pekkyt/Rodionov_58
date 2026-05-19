@@ -859,6 +859,7 @@ void printError(const Error& error)
     // Определить тип ошибки
     switch (error.type)
     {
+        //Выбрать соответствующее текстовое сообщение.
     case ErrorType::INVALID_INPUT_FILE:
         cout << "Invalid input file. The file may not exist.";
         break;
