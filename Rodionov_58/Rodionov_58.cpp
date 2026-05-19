@@ -859,93 +859,93 @@ void printError(const Error& error)
     // Определить тип ошибки
     switch (error.type)
     {
-        // Выбрать соответствующее текстовое сообщение
     case ErrorType::INVALID_INPUT_FILE:
-        cout << "Неверно указан файл с входными данными. Возможно, файл не существует.";
+        cout << "Invalid input file. The file may not exist.";
         break;
 
     case ErrorType::INVALID_OUTPUT_FILE:
-        cout << "Неверно указан файл для выходных данных. Возможно указанного расположения не существует или нет прав на запись.";
+        cout << "Invalid output file. The path may not exist or access is denied.";
         break;
 
     case ErrorType::EMPTY_INPUT_FILE:
-        cout << "Ошибка: входной файл пуст.";
+        cout << "Error: input file is empty.";
         break;
 
     case ErrorType::TOO_MANY_LINES:
-        cout << "Программа принимает на вход файлы с общим количеством строк не превышающем 100-а строк. Сократите файл до 100-а строк включительно.";
+        cout << "Error: too many lines in the input file. Maximum allowed number of lines is 100.";
         break;
 
     case ErrorType::LINE_TOO_LONG:
-        cout << "Ошибка: превышено кол-во символов в одной или нескольких входных строк файла.";
+        cout << "Error: line length exceeds 1000 characters.";
         break;
 
     case ErrorType::INVALID_SYMBOL:
-        cout << "Ошибка: символ не опознан.";
+        cout << "Error: invalid symbol.";
         break;
 
     case ErrorType::INVALID_NUMBER_FORMAT:
-        cout << "Ошибка: некорректный формат записи вещественного числа.";
+        cout << "Error: invalid number format.";
         break;
 
     case ErrorType::NUMBER_OUT_OF_RANGE:
-        cout << "Ошибка: в выражении содержится число выходящее за диапазон [0..2147483647] по модулю.";
+        cout << "Error: number is out of range [0..2147483647].";
         break;
 
     case ErrorType::MISMATCHED_BRACKETS:
-        cout << "Ошибка: некорректная расстановка скобок. Возможно отсутствует открывающая или закрывающая скобка.";
+        cout << "Error: mismatched brackets.";
         break;
 
     case ErrorType::MISSING_OPERAND:
-        cout << "Ошибка: два оператора подряд.";
+        cout << "Error: missing operand.";
         break;
 
     case ErrorType::MISSING_OPERATOR:
-        cout << "Ошибка: два операнда подряд.";
+        cout << "Error: missing operator between operands.";
         break;
 
     case ErrorType::TOO_MANY_OPERATIONS:
-        cout << "Ошибка: превышено кол-во операций в математическом выражении. Сократите выражение до 100-а операций включительно.";
+        cout << "Error: too many operations. Maximum allowed number of operations is 100.";
         break;
 
     case ErrorType::DIVISION_BY_ZERO:
-        cout << "Ошибка: деление на ноль.";
+        cout << "Error: division by zero.";
         break;
 
     case ErrorType::UNKNOWN_VARIABLE:
-        cout << "Ошибка: используется необъявленная переменная.";
+        cout << "Error: unknown variable.";
         break;
 
     case ErrorType::INVALID_ASSIGNMENT:
-        cout << "Ошибка: некорректный формат присваивания переменной.";
+        cout << "Error: invalid assignment format.";
         break;
 
     case ErrorType::INVALID_VARIABLE_NAME:
-        cout << "Ошибка: некорректное имя переменной.";
+        cout << "Error: invalid variable name.";
         break;
 
     case ErrorType::MISSING_FINAL_EXPRESSION:
-        cout << "Ошибка: отсутствует итоговое арифметическое выражение.";
+        cout << "Error: missing final expression.";
         break;
 
     default:
+        cout << "Unknown error.";
         break;
     }
+    cout << "\n";
     // При необходимости добавить информацию о позиции ошибки
     if (error.position != -1)
     {
-        cout << "Позиция ошибки: " << error.position << "\n";
+        cout << "Error position: " << error.position << "\n";
     }
     if (!error.token.empty())
     {
-        cout << "Проблемный элемент: " << error.token << "\n";
+        cout << "Problem token: " << error.token << "\n";
     }
+    cout << "\n";
 }
 
 int main(int argc, char* argv[])
 {
-    system("chcp 1251 > nul");
-    setlocale(LC_ALL, "Russian");
     // Проверить количество переданных аргументов командной строки
     if (argc != 3)
     {
