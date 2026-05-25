@@ -30,6 +30,11 @@
   * В выходной файл записывается дерево выражения в формате DOT.
   */
 
+  /**
+   * @defgroup functions Functions
+   * @brief Functions of the mathematical expression calculation program.
+   */
+
 #include <string>
 #include <vector>
 #include <map>
@@ -157,6 +162,7 @@ public:
 
 
 /**
+ * @ingroup functions
  * @brief Главная функция программы.
  * @param[in] argc Количество аргументов командной строки.
  * @param[in] argv Массив аргументов командной строки.
@@ -165,6 +171,7 @@ public:
 int main(int argc, char* argv[]);
 
 /**
+ * @ingroup functions
  * @brief Считывает строки из входного файла.
  * @param[in] filename Путь к входному файлу.
  * @param[out] errors Вектор для хранения найденных ошибок.
@@ -173,6 +180,7 @@ int main(int argc, char* argv[]);
 vector<string> readFile(const string& filename, vector<Error>& errors);
 
 /**
+ * @ingroup functions
  * @brief Обрабатывает строки присваивания переменных.
  *
  * Функция обрабатывает все строки входного файла, кроме последней.
@@ -188,6 +196,7 @@ bool processAssignments(const vector<string>& lines,
     vector<Error>& errors);
 
 /**
+ * @ingroup functions
  * @brief Парсит арифметическое выражение и строит дерево выражения.
  *
  * Функция выполняет токенизацию, преобразование выражения в постфиксную форму
@@ -200,6 +209,7 @@ bool processAssignments(const vector<string>& lines,
 ExprNode* parseExpression(const string& expression, vector<Error>& errors);
 
 /**
+ * @ingroup functions
  * @brief Разбивает арифметическое выражение на токены.
  *
  * Функция сохраняет текст каждого токена, его тип и позицию в исходной строке.
@@ -211,6 +221,7 @@ ExprNode* parseExpression(const string& expression, vector<Error>& errors);
 vector<Token> tokenize(const string& expression, vector<Error>& errors);
 
 /**
+ * @ingroup functions
  * @brief Преобразует список токенов из инфиксной формы в постфиксную форму.
  *
  * Преобразование выполняется с учетом приоритетов операций,
@@ -223,6 +234,7 @@ vector<Token> tokenize(const string& expression, vector<Error>& errors);
 vector<Token> toPostfix(const vector<Token>& tokens, vector<Error>& errors);
 
 /**
+ * @ingroup functions
  * @brief Строит дерево арифметического выражения по постфиксной записи.
  * @param[in] postfix Список токенов в постфиксной форме.
  * @param[out] errors Вектор для хранения найденных ошибок.
@@ -231,6 +243,7 @@ vector<Token> toPostfix(const vector<Token>& tokens, vector<Error>& errors);
 ExprNode* buildTree(const vector<Token>& postfix, vector<Error>& errors);
 
 /**
+ * @ingroup functions
  * @brief Вычисляет значение дерева арифметического выражения.
  *
  * Функция рекурсивно вычисляет значения дочерних узлов,
@@ -246,6 +259,7 @@ double calculate(ExprNode* node,
     vector<Error>& errors);
 
 /**
+ * @ingroup functions
  * @brief Записывает дерево выражения в файл в формате DOT.
  * @param[in] root Корень дерева выражения.
  * @param[out] out Выходной файловый поток.
@@ -253,6 +267,7 @@ double calculate(ExprNode* node,
 void writeGraph(ExprNode* root, ofstream& out);
 
 /**
+ * @ingroup functions
  * @brief Генерирует описание узлов и связей дерева в формате DOT.
  *
  * Функция рекурсивно обходит дерево выражения и записывает
@@ -264,6 +279,7 @@ void writeGraph(ExprNode* root, ofstream& out);
 void generateGraph(ExprNode* node, ofstream& out);
 
 /**
+ * @ingroup functions
  * @brief Проверяет корректность имени переменной.
  *
  * Имя переменной должно начинаться с латинской буквы
@@ -275,6 +291,7 @@ void generateGraph(ExprNode* node, ofstream& out);
 bool isValidVariableName(const string& name);
 
 /**
+ * @ingroup functions
  * @brief Возвращает приоритет операции.
  * @param[in] token Строковое представление операции.
  * @return Целочисленный приоритет операции.
@@ -282,6 +299,7 @@ bool isValidVariableName(const string& name);
 int getPriority(const string& token);
 
 /**
+ * @ingroup functions
  * @brief Форматирует число для вывода.
  *
  * Целые числа выводятся без дробной части.
@@ -293,6 +311,7 @@ int getPriority(const string& token);
 string formatNumber(double value);
 
 /**
+ * @ingroup functions
  * @brief Удаляет начальные и конечные пробельные символы из строки.
  * @param[in] s Исходная строка.
  * @return Строка без пробелов в начале и конце.
@@ -300,6 +319,7 @@ string formatNumber(double value);
 string trim(string s);
 
 /**
+ * @ingroup functions
  * @brief Выводит сообщение об ошибке в консоль.
  * @param[in] error Структура с информацией об ошибке.
  */
