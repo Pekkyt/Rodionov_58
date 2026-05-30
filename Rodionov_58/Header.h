@@ -498,3 +498,38 @@ void validateTokenSequence(const vector<Token>& tokens, vector<Error>& errors);
  * @return —трока с описанием ошибки.
  */
 string getErrorMessage(ErrorType errorType);
+
+/**
+ * @ingroup functions
+ * @brief ¬ычисл€ет значение узла переменной.
+ *
+ * ‘ункци€ провер€ет наличие имени переменной из текущего узла
+ * в таблице значений переменных. ≈сли переменна€ найдена, ее значение
+ * записываетс€ в текущий узел. ≈сли переменна€ не найдена, в список ошибок
+ * добавл€етс€ ошибка UNKNOWN_VARIABLE.
+ *
+ * @param[in,out] currentNode ”зел дерева выражени€, содержащий переменную.
+ * @param[in] variables “аблица значений переменных.
+ * @param[out] errors ¬ектор дл€ хранени€ найденных ошибок.
+ * @return true, если значение переменной успешно найдено и записано в узел;
+ * false, если переменна€ не найдена.
+ */
+bool calculateVariableNode(ExprNode* currentNode, const map<string, double>& variables, vector<Error>& errors);
+
+/**
+ * @ingroup functions
+ * @brief ¬ычисл€ет значение узла бинарной операции.
+ *
+ * ‘ункци€ выполн€ет арифметическую операцию, соответствующую типу узла:
+ * сложение, вычитание, умножение, деление или возведение в степень.
+ * ѕри делении дополнительно провер€етс€ деление на ноль.
+ * –езультат вычислени€ записываетс€ в узел операции.
+ *
+ * @param[in,out] operationNode ”зел дерева выражени€, содержащий бинарную операцию.
+ * @param[in] leftValue «начение левого операнда.
+ * @param[in] rightValue «начение правого операнда.
+ * @param[out] errors ¬ектор дл€ хранени€ найденных ошибок.
+ * @return true, если операци€ успешно вычислена; false, если во врем€
+ * вычислени€ возникла ошибка.
+ */
+bool calculateBinaryOperation(ExprNode* operationNode, double leftValue, double rightValue, vector<Error>& errors);

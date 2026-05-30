@@ -519,95 +519,112 @@ ExprNode::~ExprNode()
     delete right;
 }
 
+bool calculateVariableNode(ExprNode* currentNode, const map<string, double>& variables, vector<Error>& errors)
+{
+    // Найти значение переменной в таблице variables
+    map<string, double>::const_iterator variableIterator = variables.find(currentNode->token);
+    // Если переменная не найдена
+    if (variableIterator == variables.end())
+    {
+        errors.push_back({ ErrorType::UNKNOWN_VARIABLE, -1, currentNode->token });
+        return false;
+    }
+    // Записать найденное значение в поле value
+    currentNode->value = variableIterator->second;
+    return true;
+}
+
+bool calculateBinaryOperation(ExprNode* operationNode, double leftValue, double rightValue, vector<Error>& errors)
+{
+    // Выполнить сложение
+    if (operationNode->type == ExprNodeType::ADD)
+    {
+        operationNode->value = leftValue + rightValue;
+        return true;
+    }
+    // Выполнить вычитание
+    if (operationNode->type == ExprNodeType::SUB)
+    {
+        operationNode->value = leftValue - rightValue;
+        return true;
+    }
+    // Выполнить умножение
+    if (operationNode->type == ExprNodeType::MUL)
+    {
+        operationNode->value = leftValue * rightValue;
+        return true;
+    }
+    // Выполнить деление
+    if (operationNode->type == ExprNodeType::DIV)
+    {
+        if (fabs(rightValue) < 1e-12)
+        {
+            errors.push_back({ ErrorType::DIVISION_BY_ZERO, -1, "" });
+            return false;
+        }
+        operationNode->value = leftValue / rightValue;
+        return true;
+    }
+    // Выполнить возведение в степень
+    if (operationNode->type == ExprNodeType::POW)
+    {
+        operationNode->value = pow(leftValue, rightValue);
+        return true;
+    }
+    // Если тип операции неизвестен
+    errors.push_back({ ErrorType::INVALID_SYMBOL, -1, operationNode->token });
+    return false;
+}
+
 double calculate(ExprNode* node, const map<string, double>& variables, vector<Error>& errors)
 {
     // Если узел пуст
     if (node == nullptr)
     {
-        // Вернуть 0
         return 0;
     }
     // Если узел имеет тип NUMBER
     if (node->type == ExprNodeType::NUMBER)
     {
-        // Вернуть его значение
         return node->value;
     }
     // Если узел имеет тип VARIABLE
     if (node->type == ExprNodeType::VARIABLE)
     {
-        // Найти значение переменной в таблице variables
-        auto it = variables.find(node->token);
-        // Если переменная не найдена
-        if (it == variables.end())
+        if (!calculateVariableNode(node, variables, errors))
         {
-            // Считать вычисление выражения завершившимся с ошибкой UNKNOWN_VARIABLE
-            errors.push_back({ ErrorType::UNKNOWN_VARIABLE, -1, node->token });
-            //  Немедленно завершить вычисление
             return 0;
         }
-        // Записать найденное значение в поле value
-        node->value = it->second;
-        // Вернуть найденное значение.
         return node->value;
     }
     // Если узел имеет тип UNARY_MINUS
     if (node->type == ExprNodeType::UNARY_MINUS)
     {
-        // Рекурсивно вычислить значение дочернего узла
         double value = calculate(node->left, variables, errors);
-        // Если при вычислении дочернего узла возникла ошибка, немедленно завершить вычисление
-        if (!errors.empty()) return 0;
-        // Записать в поле value результат с противоположным знаком
-        node->value = -value;
-        // Вернуть value
-        return node->value;
-    }
-    // Если узел имеет тип бинарной операции
-    // Рекурсивно вычислить значение левого поддерева
-    double leftValue = calculate(node->left, variables, errors);
-    // Если при вычислении левого поддерева возникла ошибка, немедленно завершить вычисление
-    if (!errors.empty()) return 0;
-    // Рекурсивно вычислить значение правого поддерева.
-    double rightValue = calculate(node->right, variables, errors);
-    // Если при вычислении правого поддерева возникла ошибка, немедленно завершить вычисление
-    if (!errors.empty()) return 0;
-    // В зависимости от типа узла выполнить операцию
-    if (node->type == ExprNodeType::ADD)
-    {
-        // Для ADD выполнить сложение
-        node->value = leftValue + rightValue;
-    }
-    else if (node->type == ExprNodeType::SUB)
-    {
-        // Для SUB выполнить вычитание
-        node->value = leftValue - rightValue;
-    }
-    else if (node->type == ExprNodeType::MUL)
-    {
-        // Для MUL выполнить умножение
-        node->value = leftValue * rightValue;
-    }
-    else if (node->type == ExprNodeType::DIV)
-    {
-        // Перед делением проверить, что правый операнд не равен нулю
-        if (fabs(rightValue) < 1e-12)
+        if (!errors.empty())
         {
-            // Если происходит деление на ноль
-            // Считать вычисление выражения завершившимся с ошибкой DIVISION_BY_ZERO
-            errors.push_back({ ErrorType::DIVISION_BY_ZERO, -1, "" });
-            // Немедленно завершить вычисление
             return 0;
         }
-        // Для DIV выполнить деление
-        node->value = leftValue / rightValue;
+        node->value = -value;
+        return node->value;
     }
-    else if (node->type == ExprNodeType::POW)
+    // Рекурсивно вычислить значение левого поддерева
+    double leftValue = calculate(node->left, variables, errors);
+    if (!errors.empty())
     {
-        // Для POW выполнить возведение в степень
-        node->value = pow(leftValue, rightValue);
+        return 0;
     }
-    // Вернуть результат
+    // Рекурсивно вычислить значение правого поддерева
+    double rightValue = calculate(node->right, variables, errors);
+    if (!errors.empty())
+    {
+        return 0;
+    }
+    // Выполнить бинарную операцию
+    if (!calculateBinaryOperation(node, leftValue, rightValue, errors))
+    {
+        return 0;
+    }
     return node->value;
 }
 
