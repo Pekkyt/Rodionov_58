@@ -485,3 +485,16 @@ bool readOperatorToken(const string& expression, int& currentPosition, vector<To
  * @param[out] errors Вектор для хранения найденных ошибок.
  */
 void validateTokenSequence(const vector<Token>& tokens, vector<Error>& errors);
+
+/**
+ * @ingroup functions
+ * @brief Возвращает текстовое сообщение об ошибке.
+ *
+ * Функция получает тип ошибки и возвращает соответствующее
+ * человекочитаемое описание, которое может быть выведено в консоль
+ * или использовано при обработке ошибок программы.
+ *
+ * @param[in] errorType Тип ошибки.
+ * @return Строка с описанием ошибки.
+ */
+string getErrorMessage(ErrorType errorType);

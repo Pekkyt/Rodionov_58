@@ -899,90 +899,50 @@ vector<string> readFile(const string& filename, vector<Error>& errors)
     return lines;
 }
 
+string getErrorMessage(ErrorType errorType)
+{
+    // Создать таблицу сообщений об ошибках
+    map<ErrorType, string> errorMessages =
+    {
+        { ErrorType::INVALID_INPUT_FILE, "Invalid input file. The file may not exist." },
+        { ErrorType::INVALID_OUTPUT_FILE, "Invalid output file. The path may not exist or access is denied." },
+        { ErrorType::EMPTY_INPUT_FILE, "Error: input file is empty." },
+        { ErrorType::TOO_MANY_LINES, "Error: too many lines in the input file. Maximum allowed number of lines is 100." },
+        { ErrorType::LINE_TOO_LONG, "Error: line length exceeds 1000 characters." },
+        { ErrorType::INVALID_SYMBOL, "Error: invalid symbol." },
+        { ErrorType::INVALID_NUMBER_FORMAT, "Error: invalid number format." },
+        { ErrorType::NUMBER_OUT_OF_RANGE, "Error: number is out of range [0..2147483647]." },
+        { ErrorType::MISMATCHED_BRACKETS, "Error: mismatched brackets." },
+        { ErrorType::MISSING_OPERAND, "Error: missing operand." },
+        { ErrorType::MISSING_OPERATOR, "Error: missing operator between operands." },
+        { ErrorType::TOO_MANY_OPERATIONS, "Error: too many operations. Maximum allowed number of operations is 100." },
+        { ErrorType::DIVISION_BY_ZERO, "Error: division by zero." },
+        { ErrorType::UNKNOWN_VARIABLE, "Error: unknown variable." },
+        { ErrorType::INVALID_ASSIGNMENT, "Error: invalid assignment format." },
+        { ErrorType::INVALID_VARIABLE_NAME, "Error: invalid variable name." },
+        { ErrorType::MISSING_FINAL_EXPRESSION, "Error: missing final expression." }
+    };
+    // Найти сообщение по типу ошибки
+    map<ErrorType, string>::iterator messageIterator = errorMessages.find(errorType);
+    // Если сообщение найдено, вернуть его
+    if (messageIterator != errorMessages.end())
+    {
+        return messageIterator->second;
+    }
+    // Если тип ошибки неизвестен, вернуть сообщение по умолчанию
+    return "Unknown error.";
+}
+
 void printError(const Error& error)
 {
-    // Определить тип ошибки
-    switch (error.type)
-    {
-        //Выбрать соответствующее текстовое сообщение.
-    case ErrorType::INVALID_INPUT_FILE:
-        cout << "Invalid input file. The file may not exist.";
-        break;
-
-    case ErrorType::INVALID_OUTPUT_FILE:
-        cout << "Invalid output file. The path may not exist or access is denied.";
-        break;
-
-    case ErrorType::EMPTY_INPUT_FILE:
-        cout << "Error: input file is empty.";
-        break;
-
-    case ErrorType::TOO_MANY_LINES:
-        cout << "Error: too many lines in the input file. Maximum allowed number of lines is 100.";
-        break;
-
-    case ErrorType::LINE_TOO_LONG:
-        cout << "Error: line length exceeds 1000 characters.";
-        break;
-
-    case ErrorType::INVALID_SYMBOL:
-        cout << "Error: invalid symbol.";
-        break;
-
-    case ErrorType::INVALID_NUMBER_FORMAT:
-        cout << "Error: invalid number format.";
-        break;
-
-    case ErrorType::NUMBER_OUT_OF_RANGE:
-        cout << "Error: number is out of range [0..2147483647].";
-        break;
-
-    case ErrorType::MISMATCHED_BRACKETS:
-        cout << "Error: mismatched brackets.";
-        break;
-
-    case ErrorType::MISSING_OPERAND:
-        cout << "Error: missing operand.";
-        break;
-
-    case ErrorType::MISSING_OPERATOR:
-        cout << "Error: missing operator between operands.";
-        break;
-
-    case ErrorType::TOO_MANY_OPERATIONS:
-        cout << "Error: too many operations. Maximum allowed number of operations is 100.";
-        break;
-
-    case ErrorType::DIVISION_BY_ZERO:
-        cout << "Error: division by zero.";
-        break;
-
-    case ErrorType::UNKNOWN_VARIABLE:
-        cout << "Error: unknown variable.";
-        break;
-
-    case ErrorType::INVALID_ASSIGNMENT:
-        cout << "Error: invalid assignment format.";
-        break;
-
-    case ErrorType::INVALID_VARIABLE_NAME:
-        cout << "Error: invalid variable name.";
-        break;
-
-    case ErrorType::MISSING_FINAL_EXPRESSION:
-        cout << "Error: missing final expression.";
-        break;
-
-    default:
-        cout << "Unknown error.";
-        break;
-    }
-    cout << "\n";
-    // При необходимости добавить информацию о позиции ошибки
+    // Вывести основное сообщение об ошибке
+    cout << getErrorMessage(error.type) << "\n";
+    // Если позиция ошибки известна, вывести ее
     if (error.position != -1)
     {
         cout << "Error position: " << error.position << "\n";
     }
+    // Если есть проблемный токен, вывести его
     if (!error.token.empty())
     {
         cout << "Problem token: " << error.token << "\n";
