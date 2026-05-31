@@ -227,7 +227,8 @@ vector<Token> tokenize(const string& expression, vector<Error>& errors)
     return tokens;
 }
 
-vector<Token> toPostfix(const vector<Token>& tokens, vector<Error>& errors) {
+vector<Token> toPostfix(const vector<Token>& tokens, vector<Error>& errors) 
+{
     // Создать пустой выходной список
     vector<Token> postfix;
     // Создать пустой стек операторов
@@ -333,12 +334,6 @@ ExprNode* buildTree(const vector<Token>& postfix, vector<Error>& errors)
             {
                 // Добавить ошибку MISSING_OPERAND
                 errors.push_back({ ErrorType::MISSING_OPERAND, token.position, token.text });
-                // Освободить память уже созданных узлов
-                while (!nodes.empty())
-                {
-                    delete nodes.top();
-                    nodes.pop();
-                }
                 // Вернуть nullptr
                 return nullptr;
             }
@@ -439,16 +434,15 @@ ExprNode* parseExpression(const string& expression, vector<Error>& errors)
     }
     // Построить дерево выражения функцией buildTree
     ExprNode* root = buildTree(postfix, errors);
-    // Если при построении дерева возникли ошибки парсинга
-    if (!errors.empty())
-    {
-        // Вернуть nullptr
-        return nullptr;
-    }
-    // Если дерево не построено, добавить ошибку MISSING_OPERATOR
+    // Если дерево не построено, проверить наличие ошибок
     if (root == nullptr)
     {
-        errors.push_back({ ErrorType::MISSING_OPERATOR, -1, "" });
+        // Если buildTree не добавил ошибку, добавить ошибку отсутствия оператора
+        if (errors.empty())
+        {
+            errors.push_back({ ErrorType::MISSING_OPERATOR, -1, "" });
+        }
+        // Завершить разбор выражения, так как корень дерева отсутствует
         return nullptr;
     }
     // Посчитать кол-во операций в дереве

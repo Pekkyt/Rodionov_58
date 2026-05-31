@@ -733,6 +733,5 @@ namespace tests_buildTree
             delete root;
             delete expected;
         }
-
     };
 }

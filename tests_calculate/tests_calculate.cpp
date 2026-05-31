@@ -788,5 +788,102 @@ namespace tests_calculate
             delete expected;
         }
 
+        // 31. Ошибка внутри унарного минуса
+        TEST_METHOD(UnaryMinusWithUnknownVariable)
+        {
+            ExprNode* root = CreateUnary(CreateVariable("x"));
+            ExprNode* expected = CreateUnary(CreateVariable("x"));
+
+            vector<Error> errors;
+            map<string, double> variables;
+
+            double result = calculate(root, variables, errors);
+
+            AssertDouble(0, result);
+            Assert::AreEqual(size_t(1), errors.size());
+            AssertError(errors[0], ErrorType::UNKNOWN_VARIABLE, -1, "x");
+            AssertTreeEqual(root, expected);
+
+            delete root;
+            delete expected;
+        }
+
+        // 32. Ошибка в левом подвыражении бинарной операции
+        TEST_METHOD(BinaryOperationWithErrorInLeftOperand)
+        {
+            ExprNode* root = CreateBinary(
+                ExprNodeType::ADD, "+",
+                CreateVariable("x"),
+                CreateNumber(5, "5")
+            );
+
+            ExprNode* expected = CreateBinary(
+                ExprNodeType::ADD, "+",
+                CreateVariable("x"),
+                CreateNumber(5, "5")
+            );
+
+            vector<Error> errors;
+            map<string, double> variables;
+
+            double result = calculate(root, variables, errors);
+
+            AssertDouble(0, result);
+            Assert::AreEqual(size_t(1), errors.size());
+            AssertError(errors[0], ErrorType::UNKNOWN_VARIABLE, -1, "x");
+            AssertTreeEqual(root, expected);
+
+            delete root;
+            delete expected;
+        }
+
+        // 33. Ошибка в правом подвыражении бинарной операции
+        TEST_METHOD(BinaryOperationWithErrorInRightOperand)
+        {
+            ExprNode* root = CreateBinary(
+                ExprNodeType::ADD, "+",
+                CreateNumber(5, "5"),
+                CreateVariable("x")
+            );
+
+            ExprNode* expected = CreateBinary(
+                ExprNodeType::ADD, "+",
+                CreateNumber(5, "5"),
+                CreateVariable("x")
+            );
+
+            vector<Error> errors;
+            map<string, double> variables;
+
+            double result = calculate(root, variables, errors);
+
+            AssertDouble(0, result);
+            Assert::AreEqual(size_t(1), errors.size());
+            AssertError(errors[0], ErrorType::UNKNOWN_VARIABLE, -1, "x");
+            AssertTreeEqual(root, expected);
+
+            delete root;
+            delete expected;
+        }
+
+        // 34. Некорректный тип бинарной операции
+        TEST_METHOD(InvalidBinaryOperationType)
+        {
+            ExprNode* root = CreateBinary(
+                static_cast<ExprNodeType>(999),
+                "?",
+                CreateNumber(2, "2"),
+                CreateNumber(3, "3")
+            );
+
+            vector<Error> errors;
+            map<string, double> variables;
+
+            double result = calculate(root, variables, errors);
+
+            AssertDouble(0, result);
+
+            delete root;
+        }
     };
 }

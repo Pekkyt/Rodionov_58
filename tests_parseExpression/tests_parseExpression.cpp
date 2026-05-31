@@ -671,6 +671,5 @@ namespace tests_parseExpression
             Assert::AreEqual(size_t(1), errors.size());
             AssertError(errors[0], ErrorType::MISSING_OPERATOR, -1, "");
         }
-
     };
 }
