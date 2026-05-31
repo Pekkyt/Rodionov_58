@@ -580,3 +580,43 @@ bool validateInputLines(const vector<string>& lines, vector<Error>& errors);
  * @return true, если дерево успешно сохранено в файл; false, если возникла ошибка.
  */
 bool saveGraphToFile(const string& filename, ExprNode* root, vector<Error>& errors);
+
+/**
+ * @ingroup functions
+ * @brief Вычисляет выражение из строки присваивания.
+ *
+ * Функция получает текст арифметического выражения, которое находится
+ * справа от знака присваивания, строит дерево выражения, вычисляет его
+ * значение с учетом уже известных переменных и записывает результат
+ * в переменную calculatedValue.
+ *
+ * При ошибках разбора или вычисления информация об ошибках добавляется
+ * в вектор errors.
+ *
+ * @param[in] expressionText Текст арифметического выражения для вычисления.
+ * @param[in] variables Таблица уже известных значений переменных.
+ * @param[out] calculatedValue Вычисленное значение выражения.
+ * @param[out] errors Вектор для хранения найденных ошибок.
+ * @return true, если выражение успешно вычислено; false, если возникла ошибка.
+ */
+bool calculateAssignmentExpression(const string& expressionText, const map<string, double>& variables, double& calculatedValue, vector<Error>& errors);
+
+/**
+ * @ingroup functions
+ * @brief Разделяет строку присваивания на имя переменной и выражение.
+ *
+ * Функция обрабатывает строку присваивания, находит знак равенства,
+ * выделяет имя переменной слева от него и арифметическое выражение справа.
+ * Также выполняется проверка корректности формата присваивания и имени
+ * переменной.
+ *
+ * При некорректном формате строки или неверном имени переменной информация
+ * об ошибке добавляется в вектор errors.
+ *
+ * @param[in] assignmentLine Строка присваивания из входного файла.
+ * @param[out] variableName Имя переменной, расположенное слева от знака равенства.
+ * @param[out] expressionText Текст выражения, расположенный справа от знака равенства.
+ * @param[out] errors Вектор для хранения найденных ошибок.
+ * @return true, если строка присваивания успешно разделена; false, если найдена ошибка.
+ */
+bool splitAssignmentLine(const string& assignmentLine, string& variableName, string& expressionText, vector<Error>& errors);
