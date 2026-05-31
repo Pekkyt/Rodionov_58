@@ -533,3 +533,50 @@ bool calculateVariableNode(ExprNode* currentNode, const map<string, double>& var
  * вычисления возникла ошибка.
  */
 bool calculateBinaryOperation(ExprNode* operationNode, double leftValue, double rightValue, vector<Error>& errors);
+
+/**
+ * @ingroup functions
+ * @brief Выводит все найденные ошибки в консоль.
+ *
+ * Функция последовательно обходит вектор ошибок и выводит
+ * для каждой ошибки соответствующее сообщение. Используется
+ * для отображения всех ошибок, обнаруженных во время чтения,
+ * разбора или вычисления выражения.
+ *
+ * @param[in] errors Вектор найденных ошибок.
+ */
+
+void printAllErrors(const vector<Error>& errors);
+
+/**
+ * @ingroup functions
+ * @brief Проверяет корректность строк входного файла.
+ *
+ * Функция выполняет общую проверку входных данных: проверяет,
+ * что файл не пустой, количество строк не превышает допустимое
+ * значение, длина строк находится в допустимых пределах, а также
+ * присутствует итоговое арифметическое выражение.
+ *
+ * При обнаружении ошибок информация о них добавляется в вектор errors.
+ *
+ * @param[in] lines Строки, считанные из входного файла.
+ * @param[out] errors Вектор для хранения найденных ошибок.
+ * @return true, если входные строки корректны; false, если найдены ошибки.
+ */
+bool validateInputLines(const vector<string>& lines, vector<Error>& errors);
+
+/**
+ * @ingroup functions
+ * @brief Сохраняет дерево выражения в файл.
+ *
+ * Функция открывает выходной файл, проверяет возможность записи
+ * и сохраняет дерево арифметического выражения в формате Graphviz DOT.
+ * Если файл не удалось открыть или создать, в список ошибок добавляется
+ * ошибка INVALID_OUTPUT_FILE.
+ *
+ * @param[in] filename Путь к выходному файлу.
+ * @param[in] root Корень дерева арифметического выражения.
+ * @param[out] errors Вектор для хранения найденных ошибок.
+ * @return true, если дерево успешно сохранено в файл; false, если возникла ошибка.
+ */
+bool saveGraphToFile(const string& filename, ExprNode* root, vector<Error>& errors);

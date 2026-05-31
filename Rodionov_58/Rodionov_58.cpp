@@ -967,83 +967,92 @@ void printError(const Error& error)
     cout << "\n";
 }
 
-int main(int argc, char* argv[])
+void printAllErrors(const vector<Error>& errors)
 {
-    // Проверить количество переданных аргументов командной строки
-    if (argc != 3)
+    // Для каждой ошибки
+    for (Error error : errors)
     {
-        // Если количество аргументов не равно 3, вывести сообщение о правильном использовании программы
-        cout << "Использование: program input.txt output.txt\n";
-        // Завершить программу с ошибкой
-        return 1;
+        // вывести сообщение ошибки
+        printError(error);
     }
-    // Создать пустой список ошибок
-    vector<Error> errors;
-    // Считать входной файл функцией readFile
-    vector<string> lines = readFile(argv[1], errors);
-    // Если при чтении файла возникли ошибки
-    if (!errors.empty())
-    {
-        // Вывести сообщения обо всех найденных ошибках
-        for (Error error : errors)
-        {
-            printError(error);
-        }
-        // Завершить программу с ошибкой
-        return 1;
-    }
+}
+
+bool validateInputLines(const vector<string>& lines, vector<Error>& errors)
+{
     // Проверить, что входной файл не пуст
     if (lines.empty())
     {
-        // Если входной файл пуст, добавить ошибку EMPTY_INPUT_FILE
         errors.push_back({ ErrorType::EMPTY_INPUT_FILE, -1, "" });
     }
     // Проверить, что количество строк не превышает допустимое значение
     if ((int)lines.size() > 100)
     {
-        // Если количество строк больше 100, добавить ошибку TOO_MANY_LINES
         errors.push_back({ ErrorType::TOO_MANY_LINES, -1, "" });
     }
-    // Для каждой строки входного файла проверить её длину
+    // Проверить длину каждой строки входного файла
     for (string line : lines)
     {
-        // Если длина строки превышает 1000 символов
         if ((int)line.size() > 1000)
         {
-            // Добавить ошибку LINE_TOO_LONG
             errors.push_back({ ErrorType::LINE_TOO_LONG, -1, "" });
-            // Прервать проверку, так как ошибка уже найдена
             break;
         }
     }
-    // Проверить наличие итогового арифметического выражения в последней строке файла
+    // Проверить наличие итогового арифметического выражения
     if (lines.empty() || trim(lines.back()).empty())
     {
-        // Если последняя строка отсутствует или состоит только из пробелов, добавить ошибку MISSING_FINAL_EXPRESSION
         errors.push_back({ ErrorType::MISSING_FINAL_EXPRESSION, -1, "" });
     }
-    // Если были обнаружены ошибки входных данных
+    // вернуть true если нет ошибок
+    return errors.empty();
+}
+
+bool saveGraphToFile(const string& filename, ExprNode* root, vector<Error>& errors)
+{
+    // Открыть выходной файл для записи
+    ofstream out(filename);
+    // Если выходной файл невозможно создать или открыть
+    if (!out)
+    {
+        errors.push_back({ ErrorType::INVALID_OUTPUT_FILE, -1, "" });
+        return false;
+    }
+    // Записать дерево выражения в выходной файл
+    writeGraph(root, out);
+    // вернуть true при успешной записи
+    return true;
+}
+
+int main(int argc, char* argv[])
+{
+    // Проверить количество переданных аргументов командной строки
+    if (argc != 3)
+    {
+        cout << "Использование: program input.txt output.txt\n";
+        return 1;
+    }
+    // Создать пустой список ошибок
+    vector<Error> errors;
+    // Считать входной файл
+    vector<string> lines = readFile(argv[1], errors);
+    // Если при чтении файла возникли ошибки
     if (!errors.empty())
     {
-        // Вывести сообщения обо всех найденных ошибках
-        for (Error error : errors)
-        {
-            printError(error);
-        }
-        // Завершить программу с ошибкой
+        printAllErrors(errors);
+        return 1;
+    }
+    // Проверить корректность входных строк
+    if (!validateInputLines(lines, errors))
+    {
+        printAllErrors(errors);
         return 1;
     }
     // Создать таблицу значений переменных
     map<string, double> variables;
-    // Обработать строки присваивания переменных функцией processAssignments
+    // Обработать строки присваивания переменных
     if (!processAssignments(lines, variables, errors))
     {
-        // Если при обработке присваиваний возникли ошибки, вывести их
-        for (Error error : errors)
-        {
-            printError(error);
-        }
-        // Завершить программу с ошибкой
+        printAllErrors(errors);
         return 1;
     }
     // Обнулить счётчик номеров узлов перед построением дерева итогового выражения
@@ -1053,47 +1062,27 @@ int main(int argc, char* argv[])
     // Если при парсинге возникли ошибки или дерево не было построено
     if (!errors.empty() || root == nullptr)
     {
-        // Вывести сообщения обо всех найденных ошибках
-        for (Error error : errors)
-        {
-            printError(error);
-        }
-        // Если дерево выражения было частично создано, удалить его корень
+        printAllErrors(errors);
         delete root;
-        // Завершить программу с ошибкой
         return 1;
     }
-    // Вычислить значение дерева выражения функцией calculate
+    // Вычислить значение дерева выражения
     calculate(root, variables, errors);
     // Если при вычислении возникли ошибки
     if (!errors.empty())
     {
-        // Вывести сообщения обо всех найденных ошибках
-        for (Error error : errors)
-        {
-            printError(error);
-        }
-        // Удалить корень дерева выражения
+        printAllErrors(errors);
         delete root;
-        // Завершить программу с ошибкой
         return 1;
     }
-    // Открыть выходной файл для записи
-    ofstream out(argv[2]);
-    // Если выходной файл невозможно создать или открыть
-    if (!out)
+    // Сохранить дерево выражения в выходной файл
+    if (!saveGraphToFile(argv[2], root, errors))
     {
-        // Вывести сообщение об ошибке выходного файла
-        printError({ ErrorType::INVALID_OUTPUT_FILE, -1, "" });
-        // Удалить корень дерева выражения
+        printAllErrors(errors);
         delete root;
-        // Завершить программу с ошибкой
         return 1;
     }
-    // Записать дерево выражения в выходной файл функцией writeGraph
-    writeGraph(root, out);
     // Удалить корень дерева выражения и освободить память
     delete root;
-    // Завершить программу успешно
     return 0;
 }
